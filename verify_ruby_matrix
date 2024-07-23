@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'rubygems'
+
+gemspec_file = ARGV[0]
+matrix_file = ARGV[1]
+unless gemspec_file && File.readable?(gemspec_file) && matrix_file && File.readable?(matrix_file)
+  $stderr.puts "#{$0} file.gemspec matrix.json"
+  exit 1
+end
+
+spec = Gem::Specification::load(gemspec_file)
+requirement = spec.required_ruby_version
+
+matrix = JSON.load_file(matrix_file)
+
+matrix_rubies = matrix.fetch('ruby', [])
+
+supported_rubies = matrix_rubies.select { |version| requirement =~ Gem::Version.new(version) }
+
+if matrix_rubies != supported_rubies
+  puts "Expected to support Ruby #{matrix_rubies.join(', ')}"
+  puts "Supported: #{supported_rubies.join(', ')}"
+  puts "Missing: #{(matrix_rubies - supported_rubies).join(', ')}"
+  exit 1
+end
+
+puts "Determined compatible Ruby versions from #{requirement}: #{supported_rubies.join(', ')}"

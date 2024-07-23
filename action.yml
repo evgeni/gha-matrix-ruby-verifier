@@ -1,0 +1,33 @@
+---
+name: 'Verify supported Ruby versions'
+description: "Verify that a Ruby gem supports all Ruby versions described in a matrix.json"
+inputs:
+  repository:
+    description: 'Repository to clone'
+    required: false
+  ref:
+    description: 'Ref to clone'
+    required: false
+  base_matrix_path:
+    description: 'Path within the repository to the file containing the matrix, encoded as JSON'
+    required: false
+    default: '.github/matrix.json'
+  gemspec_path:
+    description: 'Gemspec filename'
+    required: false
+    default: '*.gemspec'
+runs:
+  using: "composite"
+  steps:
+    - name: 'Clone repo'
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.ref }}
+        sparse-checkout: |
+          ${{ inputs.base_matrix_path }}
+        sparse-checkout-cone-mode: false
+        path: base_matrix
+    - id: script
+      run: ${{ github.action_path }}/verify_ruby_matrix ${{ inputs.gemspec_path }} base_matrix/${{ inputs.base_matrix_path }}
+      shell: bash
